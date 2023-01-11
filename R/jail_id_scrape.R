@@ -138,3 +138,12 @@ for(i in seq_len(pages_num-1)){
 full_jail_df <- bind_rows(full_jail_df, parse_jail_page(res, curr_time))
 
 saveRDS(full_jail_df, paste0("data/results_jail_", format(curr_time, "%Y-%m-%d_%H_%M_%S"), ".rds"))
+
+#total_filepath <- list.files(path = "./data", pattern = "total_") %>% paste0("./data/", .)
+
+total_jail <- readRDS("./data/total_jail.rds") %>%
+  bind_rows(full_jail_df)
+
+saveRDS(total_jail, "data/total_jail.rds")
+
+
