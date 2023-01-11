@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: "5,20,35,50 * * * *"
+    - cron: "6,21,36,51 * * * *"
   push:
     branches: main
 
@@ -34,10 +34,8 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
 
       - name: Generate data
-        env:
-          SHEETS_KEY: ${{ secrets.SHEETS_KEY }}
         run: |
-          source("R/job.R")
+          source("R/jail_id_scrape.R")
         shell: Rscript {0}
 
       - name: Commit files
