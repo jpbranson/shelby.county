@@ -145,5 +145,5 @@ total_jail <- readRDS("./data/total_jail.rds") %>%
   bind_rows(full_jail_df)
 
 saveRDS(total_jail, "data/total_jail.rds")
-
+ 
 
