@@ -117,23 +117,23 @@ pages_num <- round(results_num / 30 + .5)
 
 
 
-for(i in seq_len(pages_num-1)){
+full_jail_df <- map_dfr(.x = seq_len(pages_num-1), .f = function(x){
   beg <- Sys.time()
   
   next_data = list(
     `flow_action` = 'next',
-    `currentStart` = as.character((i*30)+1)
+    `currentStart` = as.character((x*30)+1)
   )
   
   res2 <- httr::POST(url = 'https://imljail.shelbycountytn.gov/IML', httr::add_headers(.headers=headers), httr::set_cookies(.cookies = res_cookies), body = next_data, encode = 'form', user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"))
   
-  full_jail_df <- bind_rows(full_jail_df, parse_jail_page(res2, curr_time))
   
   
   end <- Sys.time()
   
-  print(paste0(i, " ------- ", as.numeric(end - beg)))
-}
+  print(paste0(x, " ------- ", as.numeric(end - beg)))
+  return(parse_jail_page(res2, curr_time))
+})
 
 full_jail_df <- bind_rows(full_jail_df, parse_jail_page(res, curr_time))
 
@@ -146,4 +146,54 @@ total_jail <- readRDS("./data/total_jail.rds") %>%
 
 saveRDS(total_jail, "data/total_jail.rds")
  
+total_ids <- total_jail%>%
+  filter(!is.na(timestamp)) %>%
+  group_by(timestamp) %>%
+  summarise(value = n_distinct(permanent_id)) %>%
+  mutate(name = "n_id_total")
 
+current_pop <- total_jail %>%
+  filter(!is.na(timestamp)) %>%
+  filter(mdy(release_date) > timestamp |
+           is.na(release_date) | release_date == "") %>%
+  group_by(timestamp) %>%
+  summarise(value = n_distinct(permanent_id)) %>%
+  mutate(name = "n_id_current")
+
+all_individuals_touched <- total_jail %>%
+  filter(!is.na(timestamp)) %>%
+  group_by(permanent_id) %>%
+  arrange(permanent_id, timestamp) %>%
+  slice(1) %>%
+  group_by(timestamp) %>%
+  summarise(value = n_distinct(permanent_id)) %>%
+  mutate(value = cumsum(value),
+         name = "all_individuals")
+#is this missing something? right end of line is blank
+
+all_ids_times <- expand.grid(timestamp = total_jail$timestamp %>% unique(), 
+                             permanent_id = total_jail$permanent_id %>% unique()) %>%
+  filter(!is.na(timestamp))
+
+arrivals_departures <- all_ids_times %>%
+  left_join({total_jail %>%
+      filter(!is.na(timestamp)) %>%
+      filter(mdy(release_date) > timestamp |
+               is.na(release_date) | release_date == "") %>%
+      distinct(permanent_id, timestamp) %>%
+      mutate(present = T)}, by = c("timestamp", "permanent_id")) %>%
+  group_by(permanent_id) %>%
+  mutate(new_arrival = is.na(lag(present, 1, order_by = timestamp)) & !is.na(present),
+         new_departure = !is.na(lag(present, 1, order_by = timestamp)) & is.na(present)) %>%
+  group_by(timestamp) %>%
+  summarise(arrivals = sum(new_arrival),
+            departures = sum(new_departure) * -1) %>%
+  pivot_longer(cols = c("arrivals", "departures")) 
+
+
+
+metrics_time_df <- bind_rows(total_ids, current_pop) %>%
+  bind_rows(all_individuals_touched) %>%
+  bind_rows(arrivals_departures)
+
+saveRDS(metrics_time_df, file = "data/metrics_time_df.rds")
