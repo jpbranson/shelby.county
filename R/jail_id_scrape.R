@@ -6,6 +6,7 @@ library(rvest)
 library(lubridate)
 library(tidyr)
 library(purrr)
+library(fst)
 
 set_config( config( ssl_verifypeer = 0L ) )
 
@@ -199,3 +200,8 @@ metrics_time_df <- bind_rows(total_ids, current_pop) %>%
   bind_rows(arrivals_departures)
 
 saveRDS(metrics_time_df, file = "data/metrics_time_df.rds")
+
+write_fst(total_jail, "data/total_jail.fst")
+write_fst(metrics_time_df, "data/metrics_time_df.fst")
+#git clone --depth 1 https://github.com/jpbranson/shelby.county
+
