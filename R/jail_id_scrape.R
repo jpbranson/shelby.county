@@ -4,6 +4,8 @@ library(stringr)
 library(httr)
 library(rvest)
 library(lubridate)
+library(tidyr)
+library(purrr)
 
 set_config( config( ssl_verifypeer = 0L ) )
 
