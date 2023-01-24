@@ -154,6 +154,8 @@ write_fst(full_jail_df, path = paste0("data/results_jail_", format(curr_time, "%
 new_files <- list.files(path = "data/", pattern = "results.*.fst", full.names = T) %>% map_dfr(.f = read_fst)
 
 
+# readRDS("data/total_jail.rds") %>% fst::write.fst(path = "data/total_jail.fst", compress = 100)
+
 total_jail <- read_fst("data/total_jail.fst") %>%
   bind_rows(new_files)
 
