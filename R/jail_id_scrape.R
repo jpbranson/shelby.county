@@ -140,15 +140,23 @@ full_jail_df <- map_dfr(.x = seq_len(pages_num-1), .f = function(x){
 
 full_jail_df <- bind_rows(full_jail_df, parse_jail_page(res, curr_time))
 
-saveRDS(full_jail_df, paste0("data/results_jail_", format(curr_time, "%Y-%m-%d_%H_%M_%S"), ".rds"))
+# saveRDS(full_jail_df, paste0("data/results_jail_", format(curr_time, "%Y-%m-%d_%H_%M_%S"), ".rds"))
+write_fst(full_jail_df, path = paste0("data/results_jail_", format(curr_time, "%Y-%m-%d_%H_%M_%S"), ".fst"))
 
 #total_filepath <- list.files(path = "./data", pattern = "total_") %>% paste0("./data/", .)
 
-total_jail <- readRDS("./data/total_jail.rds") %>%
-  bind_rows(full_jail_df)
+# total_jail <- readRDS("./data/total_jail.rds") %>%
+#   bind_rows(full_jail_df)
 
-saveRDS(total_jail, "data/total_jail.rds")
- 
+# saveRDS(total_jail, "data/total_jail.rds")
+# write_fst(total_jail, "data/total_jail.fst", compress = 100)
+
+new_files <- list.files(path = "data/", pattern = "results.*.fst", full.names = T) %>% map_dfr(.f = read_fst)
+
+
+total_jail <- read_fst("data/total_jail.fst") %>%
+  bind_rows(new_files)
+
 total_ids <- total_jail%>%
   filter(!is.na(timestamp)) %>%
   group_by(timestamp) %>%
@@ -200,8 +208,4 @@ metrics_time_df <- bind_rows(total_ids, current_pop) %>%
   bind_rows(arrivals_departures)
 
 saveRDS(metrics_time_df, file = "data/metrics_time_df.rds")
-
-write_fst(total_jail, "data/total_jail.fst")
-write_fst(metrics_time_df, "data/metrics_time_df.fst")
-#git clone --depth 1 https://github.com/jpbranson/shelby.county
-
+write_fst(metrics_time_df, file = "data/metrics_time_df.fst")
