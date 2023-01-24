@@ -210,4 +210,4 @@ metrics_time_df <- bind_rows(total_ids, current_pop) %>%
   bind_rows(arrivals_departures)
 
 saveRDS(metrics_time_df, file = "data/metrics_time_df.rds")
-write_fst(metrics_time_df, file = "data/metrics_time_df.fst")
+write_fst(metrics_time_df, path = "data/metrics_time_df.fst")
